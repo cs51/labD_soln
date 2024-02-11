@@ -249,7 +249,7 @@ Part 2: Set operations -- member, union, and intersection
 Below we provide code for computing membership, intersections, and
 unions of sets represented by lists with the stated invariant. 
 
-Check out the unit tsts for these in `labD_tests.ml`. Augment the
+Check out the unit tests for these in `labD_tests.ml`. Augment the
 tests until you're satisfied that you've fully tested these functions,
 making any needed changes as you go.
 
