@@ -115,7 +115,11 @@ let is_sorted (lst : 'a list) : bool =
   lst = List.sort Stdlib.compare lst ;;
 
 (* dups_sorted lst -- Returns the number of duplicate elements in
-   `lst`, a sorted list of integers *)
+   `lst`, a sorted list of integers. For example
+
+      # dups_sorted [1;2;5;5;5;5;5;5;6;7;7;9] ;;
+      - : int = 6
+ *)
 let rec dups_sorted (lst : 'a list) : int =
   match lst with
   | [] -> 0
@@ -366,7 +370,7 @@ problems, wherever they might be.
          Similarly for the union. 
 
       A similar process reveals that the other tests are correctly
-      stated.
+      stated. Hmm.
 
    3. Eyeballing the values used in the tests -- `example1` and
       `example2` -- they seem to look fine. No duplicates or out of
@@ -381,8 +385,13 @@ problems, wherever they might be.
          # is_set example2 ;;
          - : bool = false
 
-      The latter unit test fails! Is that because it has duplicates or
-      because it isn't sorted or both?
+      The latter unit test fails! 
+      
+      The lesson here is that sometimes what needs debugging is *the
+      unit tests themselves*. Let's debug the problem with `example2`.
+
+      Does it fail the test because it has duplicates or because it
+      isn't sorted or both?
 
          # is_sorted example2 ;;  
          - : bool = false
@@ -393,9 +402,23 @@ problems, wherever they might be.
 
       How can we find the exact location of the bug in `example2`?
       More careful eyeballing is too painful. Again, it's better to
-      let the computer do the work. We can compare `example2` with its
-      sorted version, and find the first place where they differ. That
-      should give us a clue as to what's going on.
+      let the computer do the work. 
+
+      One good and very general approach to localizing a problem in a
+      large program is to *use binary search*. We can separately test
+      the first half and the second half of the code to see which half
+      the problem occurs in. We do the same in the offending half to
+      find the bad quarter. Eventually, we'll have narrowed the search
+      down to a short enough piece of code that eyeballing may be
+      sufficient. (The process shouldn't require many divisions
+      because of the tremendous abbreviating power of logarithms.)
+
+      Another approach is to *use computer power* to aid in the
+      search. Rather than our finding the location of the problem, we
+      write code to do it for us.  For instance, we can compare
+      `example2` with its sorted version, and find the first place
+      where they differ. That should give us a clue as to what's going
+      on.
 
          # List.find (fun (x, y) -> x <> y)
                    (List.combine example2 
@@ -406,7 +429,46 @@ problems, wherever they might be.
       order. Now, reexamining the definition of `example2` verifies that
       1872 is way early.
 
-      We can remedy the problem in a variety of ways. In the solution
-      version of `labD_examples.ml`, we've simply replaced the 1872 with
-      1072, which falls properly in sorted order.
+      Now we turn to fixing the problem. Here are some options to consider.
+
+      1. Drop the unit tests that involve `example2`. This makes
+         sense, because `example2` does not conform to the required
+         invariants. 
+
+         This is a *lost opportunity* since testing on some large
+         cases is a useful thing to do.
+
+      2. Change the parity of the offending unit tests, that is,
+         change the `member` unit test to
+
+            unit_test (member 1322 example2) "member: 1322 in e2";
+
+         This is a **terrible idea**. It casts in stone the particular
+         way in which the function behaves on invariant-failing cases,
+         even though, the function's specification doesn't require
+         this behavior.
+
+      3. Change the definitions of the `member`, `intersection`, and
+         `union` functions so that they verify the invariants on their
+         arguments and results. But what should they do if the
+         verification fails? They might raise an appropriate
+         exception, which the unit tests could then test for. But the
+         raising of the exception in that case was not part of the
+         specifications of those functions.
+
+         a. In addition, add a specification to the functions as to
+            what exceptions may be raised and under what
+            conditions. Then add unit tests that verify that behavior.
+
+            This is a *reasonable choice* though it requires a fair
+            amount of effort. In later labs we'll see methods for
+            making sure that nonconforming data structures can be
+            prevented from even being created.
+
+      4. Change the definition of `example2` to obey the
+         invariants. There are many ways to do so. For instance, we
+         might drop the offending 1872 from the example, or move it to
+         the end of the list where it would be in sorted order. In the
+         solution version of `labD_examples.ml`, we replaced the 1872
+         with 1072, which falls properly in sorted order.
  *)
